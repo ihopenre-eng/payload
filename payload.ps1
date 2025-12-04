@@ -46,46 +46,55 @@ function Upload-FileAndGetLink {
         [string]$filePath
     )
 
-    # Get URL from GoFile
-    $serverResponse = Invoke-RestMethod -Uri 'https://api.gofile.io/getServer'
-    if ($serverResponse.status -ne "ok") {
-        Write-Host "Failed to get server URL: $($serverResponse.status)"
+ function Upload-ToGofileV2 {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$filePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$token  # gofile API token
+    )
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    if (-not (Test-Path $filePath)) {
+        Write-Host "File not found: $filePath"
         return $null
     }
 
-    # Define the upload URI
-    $uploadUri = "https://$($serverResponse.data.server).gofile.io/uploadFile"
+    $uri = "https://api.gofile.io/contents/uploadFile"
 
-    # Prepare the file for uploading
-    $fileBytes = Get-Content $filePath -Raw -Encoding Byte
-    $fileEnc = [System.Text.Encoding]::GetEncoding('iso-8859-1').GetString($fileBytes)
-    $boundary = [System.Guid]::NewGuid().ToString()
-    $LF = "`r`n"
-    $bodyLines = (
-        "--$boundary",
-        "Content-Disposition: form-data; name=`"file`"; filename=`"$([System.IO.Path]::GetFileName($filePath))`"",
-        "Content-Type: application/octet-stream",
-        $LF,
-        $fileEnc,
-        "--$boundary--",
-        $LF
-    ) -join $LF
-
-    # Upload the file
     try {
-        $response = Invoke-RestMethod -Uri $uploadUri -Method Post -ContentType "multipart/form-data; boundary=$boundary" -Body $bodyLines
-        if ($response.status -ne "ok") {
-            Write-Host "Failed to upload file: $($response.status)"
+        
+        $form = New-Object System.Net.Http.MultipartFormDataContent
+        
+        $fileStream = [System.IO.File]::OpenRead($filePath)
+        $fileContent = New-Object System.Net.Http.StreamContent($fileStream)
+        $fileContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::new("application/octet-stream")
+
+
+        $form.Add($fileContent, "file", [System.IO.Path]::GetFileName($filePath))
+
+
+        $form.Add((New-Object System.Net.Http.StringContent($token)), "token")
+
+        $http = New-Object System.Net.Http.HttpClient
+        $res = $http.PostAsync($uri, $form).Result
+        $json = $res.Content.ReadAsStringAsync().Result | ConvertFrom-Json
+
+        if ($json.status -ne "ok") {
+            Write-Host "Upload failed: $($json.status)"
             return $null
         }
-        return $response.data.downloadPage
-    } catch {
-        Write-Host "Failed to upload file: $_"
+
+        return $json.data.downloadPage
+    }
+    catch {
+        Write-Host "Error uploading: $_"
         return $null
     }
 }
-
-
+   
 # Check for 7zip path
 $zipExePath = "C:\Program Files\7-Zip\7z.exe"
 if (-not (Test-Path $zipExePath)) {
