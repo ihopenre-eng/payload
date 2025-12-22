@@ -12,7 +12,7 @@ try {
 catch {}
 
 $script:YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-$script:DURATION = 15 
+$script:DURATION = 7 
 
 $script:Colors = @{
     BgDark     = [System.Drawing.Color]::FromArgb(5, 5, 8)
@@ -379,3 +379,4 @@ Write-Host " [!] AI NEUTRALIZER v5.3 - STARTING..." -ForegroundColor Cyan
 Start-Sleep -Seconds 1
 
 [System.Windows.Forms.Application]::Run($main)
+
