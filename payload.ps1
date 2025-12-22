@@ -1,5 +1,3 @@
-# AI Neutralizer - PowerShell Version 5.3 (English Fix)
-# Removing potential encoding issues and simplifying syntax
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -121,7 +119,7 @@ function Start-SubWindows {
         Width       = 240
         Height      = 180
         BorderColor = $script:Colors.NeonCyan
-        Interval    = 50
+        Interval    = 30 # FASTER
         UpdateLogic = {
             param($tb)
             $tb.AppendText((Get-RandomString "01" 30) + "`n")
@@ -139,7 +137,7 @@ function Start-SubWindows {
         Width       = 320
         Height      = 160
         BorderColor = $script:Colors.NeonPurple
-        Interval    = 80
+        Interval    = 50 # FASTER
         UpdateLogic = {
             param($tb)
             $addr = "0x{0:X8}" -f (Get-Random -Min 268435456 -Max 2147483647)
@@ -159,7 +157,7 @@ function Start-SubWindows {
         Width       = 380
         Height      = 220
         BorderColor = $script:Colors.NeonPink
-        Interval    = 300
+        Interval    = 150 # FASTER
         UpdateLogic = {
             param($tb)
             $msg = $script:HackerMessages[(Get-Random -Max $script:HackerMessages.Count)]
@@ -181,7 +179,7 @@ function Start-SubWindows {
         Width       = 320
         Height      = 180
         BorderColor = $script:Colors.NeonBlue
-        Interval    = 120
+        Interval    = 80 # FASTER
         UpdateLogic = {
             param($tb)
             $ip = "192.168.{0}.{1}" -f (Get-Random -Max 255), (Get-Random -Max 255)
@@ -202,7 +200,7 @@ function Start-SubWindows {
         Width       = 220
         Height      = 140
         BorderColor = $script:Colors.NeonGreen
-        Interval    = 100
+        Interval    = 60 # FASTER
         UpdateLogic = {
             param($tb)
             $tb.Clear()
@@ -222,7 +220,7 @@ function Start-SubWindows {
         Width       = 220
         Height      = 140
         BorderColor = $script:Colors.NeonOrange
-        Interval    = 150
+        Interval    = 70 # FASTER
         UpdateLogic = {
             param($tb)
             $file = $script:AIFiles[(Get-Random -Max $script:AIFiles.Count)]
@@ -240,7 +238,7 @@ function Start-SubWindows {
         Width       = 220
         Height      = 120
         BorderColor = $script:Colors.NeonRed
-        Interval    = 250
+        Interval    = 150 # FASTER
         UpdateLogic = {
             param($tb)
             $tb.SelectionAlignment = [System.Windows.Forms.HorizontalAlignment]::Center
@@ -316,10 +314,11 @@ $percent.Location = New-Object System.Drawing.Point(47, 260)
 $bg.Controls.Add($percent)
 
 $mainTimer = New-Object System.Windows.Forms.Timer
-$mainTimer.Interval = 100
+$mainTimer.Interval = 30  # INCREASED SPEED (was 100)
 $mainTimer.Add_Tick({
         if ($script:Progress -lt 100) {
-            $inc = (Get-Random -Min 2 -Max 12) / 10.0
+            # INCREASED SPEED: Larger increments (was 0.2 to 1.2)
+            $inc = (Get-Random -Min 5 -Max 25) / 10.0 
             $script:Progress = [math]::Min(100, $script:Progress + $inc)
         
             $pBarFill.Width = [int](496 * $script:Progress / 100)
@@ -375,9 +374,7 @@ $main.Add_Shown({
     })
 
 Clear-Host
-Write-Host " [!] AI NEUTRALIZER v5.3 - STARTING..." -ForegroundColor Cyan
+Write-Host " [!] AI NEUTRALIZER v5.3 - FAST MODE ACTIVATED..." -ForegroundColor Cyan
 Start-Sleep -Seconds 1
 
 [System.Windows.Forms.Application]::Run($main)
-
-
