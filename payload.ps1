@@ -1,80 +1,101 @@
-# ===============================
-#  Multi-Window Popup Showcase
-# ===============================
-
-$ErrorActionPreference = "SilentlyContinue"
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
 $yt = "https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
 
-function LaunchWindow($title, $lines, $delay=30) {
-    $script = @"
-`$Host.UI.RawUI.WindowTitle = '$title'
-Clear-Host
-foreach (`$l in @($($lines | ForEach-Object { "'$_'" } -join ","))) {
-    Write-Host `$l
-    Start-Sleep -Milliseconds $delay
-}
-Start-Sleep -Seconds 2
-"@
-    Start-Process powershell -ArgumentList "-NoExit","-ExecutionPolicy Bypass","-Command",$script
+function New-Popup($title, $lines, $x, $y) {
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = $title
+    $form.Size = New-Object System.Drawing.Size(420,260)
+    $form.StartPosition = "Manual"
+    $form.Location = New-Object System.Drawing.Point($x,$y)
+    $form.BackColor = [System.Drawing.Color]::Black
+    $form.ForeColor = [System.Drawing.Color]::Lime
+    $form.TopMost = $true
+
+    $box = New-Object System.Windows.Forms.TextBox
+    $box.Multiline = $true
+    $box.Dock = "Fill"
+    $box.BackColor = "Black"
+    $box.ForeColor = "Lime"
+    $box.BorderStyle = "None"
+    $box.Font = New-Object System.Drawing.Font("Consolas",10)
+    $form.Controls.Add($box)
+
+    $form.Show()
+
+    foreach ($l in $lines) {
+        $box.AppendText($l + "`r`n")
+        Start-Sleep -Milliseconds (Get-Random 40 80)
+    }
 }
 
-# 창 1
-LaunchWindow "MODULE INIT" @(
-    "[+] USB interface detected",
-    "[+] Loading runtime",
-    "[+] Allocating memory blocks",
-    "[+] Environment OK"
-) 40
+# 화면 기준 좌표
+New-Popup "MODULE INIT" @(
+    "[+] USB detected",
+    "[+] Runtime loaded",
+    "[+] Memory allocated",
+    "[+] Environment stable"
+) 50 50
+
+Start-Sleep -Milliseconds 150
+
+New-Popup "PIPELINE" @(
+    "[*] Stage 1 online",
+    "[*] Stage 2 online",
+    "[*] Stage 3 online"
+) 520 80
+
+Start-Sleep -Milliseconds 150
+
+New-Popup "STREAM" @(
+    "[>] Buffer sync",
+    "[>] Render thread active",
+    "[>] Output locked"
+) 200 360
 
 Start-Sleep -Milliseconds 200
 
-# 창 2
-LaunchWindow "PIPELINE" @(
-    "[*] Stage 1 started",
-    "[*] Stage 2 started",
-    "[*] Stage 3 started",
-    "[*] Synchronizing streams"
-) 25
+# 진행률 창
+$form = New-Object System.Windows.Forms.Form
+$form.Text = "PROGRESS"
+$form.Size = New-Object System.Drawing.Size(500,160)
+$form.StartPosition = "CenterScreen"
+$form.BackColor = "Black"
+$form.ForeColor = "Cyan"
+$form.TopMost = $true
 
-Start-Sleep -Milliseconds 200
+$label = New-Object System.Windows.Forms.Label
+$label.Dock = "Fill"
+$label.TextAlign = "MiddleCenter"
+$label.Font = New-Object System.Drawing.Font("Consolas",18)
+$form.Controls.Add($label)
+$form.Show()
 
-# 창 3
-LaunchWindow "STREAM" @(
-    "[>] Buffering output",
-    "[>] Rendering console feed",
-    "[>] Injecting visual layer",
-    "[>] Channel stable"
-) 20
-
-Start-Sleep -Milliseconds 200
-
-# 창 4 (프로그레스 전용)
-$progressScript = @"
-`$Host.UI.RawUI.WindowTitle = 'PROGRESS'
-Clear-Host
-for (`$i=0; `$i -le 100; `$i++) {
-    `$bar = '#' * (`$i/2)
-    `$space = ' ' * (50 - (`$i/2))
-    Write-Host -NoNewline "`r[`$bar`$space] `$i% "
-    Start-Sleep -Milliseconds (Get-Random -Minimum 20 -Maximum 50)
+for ($i=0; $i -le 100; $i++) {
+    $label.Text = "EXECUTING... $i%"
+    Start-Sleep -Milliseconds 35
 }
-Start-Sleep -Seconds 2
-"@
-Start-Process powershell -ArgumentList "-NoExit","-ExecutionPolicy Bypass","-Command",$progressScript
 
-Start-Sleep -Seconds 3
+$form.Close()
 
-# 최종 SUCCESS 창
-$finalScript = @"
-`$Host.UI.RawUI.WindowTitle = 'RESULT'
-Clear-Host
-Write-Host ''
-Write-Host '==============================='
-Write-Host '          SUCCESSFUL           '
-Write-Host '==============================='
-Write-Host ''
+# 최종 성공 창
+$final = New-Object System.Windows.Forms.Form
+$final.Text = "RESULT"
+$final.Size = New-Object System.Drawing.Size(600,200)
+$final.StartPosition = "CenterScreen"
+$final.BackColor = "Black"
+$final.ForeColor = "Lime"
+$final.TopMost = $true
+
+$done = New-Object System.Windows.Forms.Label
+$done.Dock = "Fill"
+$done.TextAlign = "MiddleCenter"
+$done.Font = New-Object System.Drawing.Font("Consolas",28,[System.Drawing.FontStyle]::Bold)
+$done.Text = "SUCCESSFUL"
+$final.Controls.Add($done)
+
+$final.Show()
 Start-Sleep -Milliseconds 800
-Start-Process '$yt'
-"@
-Start-Process powershell -ArgumentList "-NoExit","-ExecutionPolicy Bypass","-Command",$finalScript
+
+Start-Process $yt
