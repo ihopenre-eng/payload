@@ -1,9 +1,3 @@
-"""
-AI 무력화 시스템 - USB 스크립트
-동아리 연극/영상용 멋진 해커 스타일 AI 무력화 스크립트
-사이버펑크 네온 스타일 v2.0
-"""
-
 import tkinter as tk
 from tkinter import ttk
 import random
@@ -13,17 +7,14 @@ import webbrowser
 import sys
 import math
 
-# ===== 설정 =====
-YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # 여기에 원하는 유튜브 링크를 넣으세요!
-MAIN_PROGRESS_DURATION = 10  # 메인 진행 시간 (초)
+YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  
+MAIN_PROGRESS_DURATION = 10  
 
-# 🎨 사이버펑크 네온 색상 팔레트
 COLORS = {
     'bg': '#0d0d0d',
     'bg_dark': '#050508',
     'bg_panel': '#111118',
     
-    # 네온 색상들
     'neon_cyan': '#00f5ff',
     'neon_pink': '#ff00ff',
     'neon_purple': '#bf00ff',
@@ -33,7 +24,6 @@ COLORS = {
     'neon_orange': '#ff6b00',
     'neon_red': '#ff0040',
     
-    # 보조 색상
     'white': '#ffffff',
     'gray': '#666680',
     'dark_cyan': '#004455',
@@ -41,7 +31,6 @@ COLORS = {
     'dark_purple': '#1a0033',
 }
 
-# 한국어 해커 메시지들
 HACKER_MESSAGES = [
     "[SYS] 페이로드 초기화 중...",
     "[NET] 방화벽 우회 중...",
@@ -92,7 +81,6 @@ class MatrixRain:
         
         self.color = color or COLORS['neon_cyan']
         
-        # 네온 테두리 효과
         border_frame = tk.Frame(self.window, bg=self.color, padx=1, pady=1)
         border_frame.pack(fill=tk.BOTH, expand=True)
         
@@ -136,7 +124,6 @@ class MatrixRain:
 
 
 class HexDumpWindow:
-    """헥스 덤프 스타일 창"""
     def __init__(self, x, y, width=350, height=180, title="메모리 덤프", color=None):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -191,7 +178,6 @@ class HexDumpWindow:
 
 
 class LogWindow:
-    """해커 로그 창"""
     def __init__(self, x, y, width=420, height=260, title="[ 공격 로그 ]"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -200,7 +186,6 @@ class LogWindow:
         self.window.overrideredirect(True)
         self.window.attributes('-topmost', True)
         
-        # 이중 테두리 효과
         outer = tk.Frame(self.window, bg=COLORS['neon_pink'], padx=2, pady=2)
         outer.pack(fill=tk.BOTH, expand=True)
         
@@ -255,7 +240,6 @@ class LogWindow:
 
 
 class NetworkScanWindow:
-    """네트워크 스캔 창"""
     def __init__(self, x, y, width=320, height=200, title="네트워크 스캔"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -308,7 +292,6 @@ class NetworkScanWindow:
 
 
 class ProcessKillerWindow:
-    """프로세스 종료 창"""
     def __init__(self, x, y, width=320, height=180, title="프로세스 종료"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -360,7 +343,6 @@ class ProcessKillerWindow:
 
 
 class DataCorruptionWindow:
-    """데이터 손상 창"""
     def __init__(self, x, y, width=300, height=170, title="데이터 손상"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -413,7 +395,6 @@ class DataCorruptionWindow:
 
 
 class PasswordCrackWindow:
-    """패스워드 크래킹 창"""
     def __init__(self, x, y, width=300, height=160, title="암호 해독"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -468,7 +449,6 @@ class PasswordCrackWindow:
 
 
 class FileDeleteWindow:
-    """파일 삭제 창"""
     def __init__(self, x, y, width=360, height=190, title="AI 파일 삭제"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -525,7 +505,6 @@ class FileDeleteWindow:
 
 
 class SystemAlertWindow:
-    """시스템 경고 창 - 깜빡임"""
     def __init__(self, x, y, width=280, height=150, title="⚠ 시스템 경고"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -593,7 +572,6 @@ class SystemAlertWindow:
 
 
 class CPUMonitorWindow:
-    """CPU 모니터 창"""
     def __init__(self, x, y, width=220, height=140, title="CPU 부하"):
         self.window = tk.Toplevel()
         self.window.title(title)
@@ -659,10 +637,9 @@ class CPUMonitorWindow:
 
 
 class MainProgressWindow:
-    """메인 진행 창 - 사이버펑크 스타일"""
     def __init__(self):
         self.window = tk.Tk()
-        self.window.title("AI 무력화 시스템 v3.7.1")
+        self.window.title("AI 서버 무력화 시스템 v3.7.1")
         
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
@@ -675,7 +652,6 @@ class MainProgressWindow:
         self.window.overrideredirect(True)
         self.window.attributes('-topmost', True)
         
-        # 이중 네온 테두리
         outer_border = tk.Frame(self.window, bg=COLORS['neon_pink'], padx=3, pady=3)
         outer_border.pack(fill=tk.BOTH, expand=True)
         
@@ -685,11 +661,9 @@ class MainProgressWindow:
         main_frame = tk.Frame(inner_border, bg=COLORS['bg_dark'])
         main_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         
-        # 타이틀 영역
         title_frame = tk.Frame(main_frame, bg=COLORS['bg_dark'])
         title_frame.pack(fill=tk.X, pady=5)
         
-        # 장식 라인
         deco1 = tk.Label(title_frame, text="━━━━━━━━━━━━━━━━━", 
                         font=("Consolas", 10), fg=COLORS['neon_pink'], bg=COLORS['bg_dark'])
         deco1.pack()
@@ -768,7 +742,6 @@ class MainProgressWindow:
         
         fill_width = int(width * percent / 100)
         
-        # 그라데이션 효과 (핑크 → 시안)
         for i in range(fill_width):
             ratio = i / max(width, 1)
             r = int(255 * (1 - ratio) + 0 * ratio)
@@ -777,7 +750,6 @@ class MainProgressWindow:
             color = f"#{r:02x}{g:02x}{b:02x}"
             self.progress_canvas.create_line(i, 0, i, height, fill=color)
         
-        # 글리치 효과
         if random.random() > 0.75:
             for _ in range(5):
                 rx = random.randint(0, fill_width) if fill_width > 0 else 0
@@ -787,7 +759,6 @@ class MainProgressWindow:
                 self.progress_canvas.create_rectangle(rx, ry-rh//2, rx+rw, ry+rh//2, 
                                                       fill=COLORS['white'], outline="")
         
-        # 스캔라인 효과
         for y in range(0, height, 4):
             self.progress_canvas.create_line(0, y, width, y, fill=COLORS['bg_dark'], width=1)
         
@@ -883,13 +854,11 @@ class MainProgressWindow:
         success_frame = tk.Frame(self.window, bg=COLORS['bg_dark'])
         success_frame.pack(fill=tk.BOTH, expand=True)
         
-        # 상단 장식
         top_deco = tk.Label(success_frame, 
                            text="◆ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ◆",
                            font=("Consolas", 12), fg=COLORS['neon_pink'], bg=COLORS['bg_dark'])
         top_deco.pack(pady=30)
         
-        # SUCCESS 텍스트 (글로우 효과)
         success_art = """
   ██████  ██    ██  ██████  ██████ ███████ ███████ ███████ 
  ██       ██    ██ ██      ██      ██      ██      ██      
@@ -898,19 +867,16 @@ class MainProgressWindow:
  ██████    ██████   ██████  ██████ ███████ ███████ ███████ 
         """
         
-        # 글로우 레이어 (배경)
         glow_label = tk.Label(success_frame, text=success_art, font=("Consolas", 18, "bold"),
                              fg=COLORS['dark_cyan'], bg=COLORS['bg_dark'], justify=tk.CENTER)
         glow_label.pack(pady=10)
         glow_label.place(relx=0.5, y=180, anchor=tk.CENTER)
         
-        # 메인 텍스트
         self.art_label = tk.Label(success_frame, text=success_art, font=("Consolas", 18, "bold"),
                             fg=COLORS['neon_cyan'], bg=COLORS['bg_dark'], justify=tk.CENTER)
         self.art_label.pack(pady=10)
         self.art_label.place(relx=0.5, y=175, anchor=tk.CENTER)
         
-        # 메시지들
         msg_frame = tk.Frame(success_frame, bg=COLORS['bg_dark'])
         msg_frame.place(relx=0.5, y=400, anchor=tk.CENTER)
         
@@ -930,7 +896,6 @@ class MainProgressWindow:
                        font=("Consolas", 14), fg=COLORS['neon_orange'], bg=COLORS['bg_dark'])
         msg3.pack(pady=10)
         
-        # 하단 장식
         bottom_frame = tk.Frame(success_frame, bg=COLORS['bg_dark'])
         bottom_frame.place(relx=0.5, rely=0.85, anchor=tk.CENTER)
         
@@ -943,7 +908,6 @@ class MainProgressWindow:
                        font=("Consolas", 12), fg=COLORS['gray'], bg=COLORS['bg_dark'])
         msg4.pack(pady=5)
         
-        # 점멸 효과
         self.blink_count = 0
         def blink():
             if self.blink_count < 10:
@@ -1004,7 +968,7 @@ def main():
     ║    ██║  ██║██║    ██║ ╚████║███████╗╚██████╔╝   ██║      ║
     ║    ╚═╝  ╚═╝╚═╝    ╚═╝  ╚═══╝╚══════╝ ╚═════╝    ╚═╝      ║
     ║                                                          ║
-    ║            [ AI 무력화 시스템 v3.7.1 ]                   ║
+    ║            [ AI 서버 무력화 시스템 v3.7.1 ]               ║
     ║                 CYBERPUNK EDITION                        ║
     ╚══════════════════════════════════════════════════════════╝
     
@@ -1022,3 +986,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
