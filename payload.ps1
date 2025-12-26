@@ -493,7 +493,7 @@ function Start-SuccessSequence {
     $bg.Location = New-Object System.Drawing.Point(0, 0)
     
     $lbl = New-Object System.Windows.Forms.Label
-    $lbl.Text = " Ai 서버 무력화 성공! "
+    $lbl.Text = " AI neutralization success "
     $lbl.ForeColor = $script:Colors.NeonGreen
     $lbl.Font = New-Object System.Drawing.Font("Consolas", 32, [System.Drawing.FontStyle]::Bold)
     $lbl.TextAlign = "MiddleCenter"
@@ -523,6 +523,7 @@ Start-Sleep -Seconds 1
 [System.Windows.Forms.Application]::Run($main)
 
   
+
 
 
 
