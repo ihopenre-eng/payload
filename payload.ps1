@@ -10,7 +10,7 @@ try {
 }
 catch {}
 
-$script:YOUTUBE_URL = ""
+$script:YOUTUBE_URL = "https://jjalbot.com/jjals/FG9CkSfY2"
 $script:DURATION = 4 
 
 $script:Colors = @{
@@ -523,6 +523,7 @@ Start-Sleep -Seconds 1
 [System.Windows.Forms.Application]::Run($main)
 
   
+
 
 
 
