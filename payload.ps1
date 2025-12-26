@@ -10,7 +10,7 @@ try {
 }
 catch {}
 
-$script:YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+$script:YOUTUBE_URL = ""
 $script:DURATION = 4 
 
 $script:Colors = @{
@@ -493,7 +493,7 @@ function Start-SuccessSequence {
     $bg.Location = New-Object System.Drawing.Point(0, 0)
     
     $lbl = New-Object System.Windows.Forms.Label
-    $lbl.Text = " MISSION ACCOMPLISHED "
+    $lbl.Text = " Ai 서버 무력화 성공! "
     $lbl.ForeColor = $script:Colors.NeonGreen
     $lbl.Font = New-Object System.Drawing.Font("Consolas", 32, [System.Drawing.FontStyle]::Bold)
     $lbl.TextAlign = "MiddleCenter"
@@ -523,5 +523,6 @@ Start-Sleep -Seconds 1
 [System.Windows.Forms.Application]::Run($main)
 
   
+
 
 
